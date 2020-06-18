@@ -1,3 +1,7 @@
+/**
+ * @typedef {import('../Client').Client} Client
+ */
+
 class Message {
   constructor(content, options) {
     this.content = content
