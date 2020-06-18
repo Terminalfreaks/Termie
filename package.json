@@ -1,14 +1,14 @@
 {
-  "name": "termbot",
+  "name": "termie",
   "version": "0.0.1",
-  "description": "Bot library for TermTalk",
+  "description": "First and official TermTalk bot library, made by its devs.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Terminalfreaks/TermBot.js.git"
+    "url": "git+https://github.com/Terminalfreaks/Termie.git"
   },
   "keywords": [
     "TermTalk",
@@ -16,11 +16,11 @@
     "Library"
   ],
   "author": "Steven4547466",
-  "license": "GPL-3.0-or-later",
+  "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/Terminalfreaks/TermBot.js/issues"
+    "url": "https://github.com/Terminalfreaks/Termie/issues"
   },
-  "homepage": "https://github.com/Terminalfreaks/TermBot.js#readme",
+  "homepage": "https://github.com/Terminalfreaks/Termie#readme",
   "dependencies": {
     "socket.io-client": "^2.3.0"
   }
