@@ -1,1 +1,3 @@
-module.exports = require("./src/Client")
+module.exports = {
+	Client: require("./src/Client")
+}
