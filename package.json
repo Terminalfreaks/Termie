@@ -1,0 +1,27 @@
+{
+  "name": "termbot",
+  "version": "0.0.1",
+  "description": "Bot library for TermTalk",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Terminalfreaks/TermBot.js.git"
+  },
+  "keywords": [
+    "TermTalk",
+    "Bot",
+    "Library"
+  ],
+  "author": "Steven4547466",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/Terminalfreaks/TermBot.js/issues"
+  },
+  "homepage": "https://github.com/Terminalfreaks/TermBot.js#readme",
+  "dependencies": {
+    "socket.io-client": "^2.3.0"
+  }
+}
