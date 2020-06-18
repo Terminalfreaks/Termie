@@ -23,7 +23,7 @@ class Client extends EventEmitter {
   makeRequest(opts, postData) {
     return new Promise((resolve, reject) => {
       if (!opts) return reject("No options provided.")
-      if (opts.method == "POST" && opts.headers["content-type"] == "application/json") postData = JSON.parse(postData)
+      if (opts.method == "POST" && opts.headers["Content-Type"] == "application/json") postData = JSON.stringify(postData)
       else if (opts.method == "GET" && postData) opts.path += `?${qs.encode(postData)}`
       const req = http.request(opts, (res) => {
         let statusCode = res.statusCode
@@ -198,6 +198,53 @@ class Client extends EventEmitter {
         this.setupListeners()
         this.emit("ready")
       }
+    })
+  }
+
+  static createBot(uid, username, tag, options) {
+    return new Promise((resolve, reject) => {
+      let http = options.secure ? require("https") : require("http")
+      if(!uid || !username || !tag) return reject("Not all bot create options were supplied.")
+      if(!options.hostname || !options.port) return reject("Provide proper options.")
+      if(!options.ownerUid || !options.ownerPassword) return reject("Please provide owner information.")
+      let opts = {
+        hostname: options.hostname,
+        port: options.port,
+        path: "/bots/create",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      }
+      if (!opts) return reject("No options provided.")
+      let postData = JSON.stringify({
+        ownerUid: options.ownerUid,
+        ownerPassword: options.ownerPassword,
+        uid,
+        username,
+        tag
+      })
+      const req = http.request(opts, (res) => {
+        let statusCode = res.statusCode
+
+        let data = ""
+        res.setEncoding('utf8')
+        res.on('data', (chunk) => data += chunk)
+        res.on('end', () => {
+          if (res.headers["content-type"] == "application/json") data = JSON.parse(data)
+          if (statusCode < 200 || statusCode >= 300) {
+            return reject(data)
+          }
+          return resolve(data)
+        })
+      })
+
+      req.on("error", (e) => {
+        return reject(e)
+      })
+
+      req.write(postData)
+      req.end()
     })
   }
 }
