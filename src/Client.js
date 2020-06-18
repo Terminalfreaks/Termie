@@ -119,7 +119,7 @@ class Client extends EventEmitter {
     }
   }
 
-  connect(ip, port, options) {
+  _connect(ip, port, options) {
     if (!options) options = {}
     return new Promise((resolve, reject) => {
       const reconnectionAttempts = options.reconnectionAttempts || 5
@@ -179,7 +179,7 @@ class Client extends EventEmitter {
   }
 
   async login(options) {
-    this.socket = await this.connect(this.ip, this.port, options)
+    this.socket = await this._connect(this.ip, this.port, options)
     this.socket.emit("login", { bot: true, token: this.token })
     this.socket.once("authResult", async (data) => {
       if (!data.success) {
