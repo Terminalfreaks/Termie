@@ -3,7 +3,8 @@ module.exports = {
     AuthError: require("./errors/AuthError"),
     ConnectError: require("./errors/ConnectError"),
     GetChannelsError: require("./errors/GetChannelsError"),
-    GetMembersError: require("./errors/GetMembersError")
+    GetMembersError: require("./errors/GetMembersError"),
+    SendMessageError: require("./errors/SendMessageError")
   },
   classes: {
     Member: require("./classes/Member"),
