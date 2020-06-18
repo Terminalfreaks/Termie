@@ -23,7 +23,7 @@ class Client extends EventEmitter {
   makeRequest(opts, postData) {
     return new Promise((resolve, reject) => {
       if (!opts) return reject("No options provided.")
-      if (opts.method == "POST" && opts.headers["content-type"] == "application/json") postData = JSON.stringify(postData)
+      if (opts.method == "POST" && opts.headers["Content-Type"] == "application/json") postData = JSON.stringify(postData)
       else if (opts.method == "GET" && postData) opts.path += `?${qs.encode(postData)}`
       const req = http.request(opts, (res) => {
         let statusCode = res.statusCode

@@ -1,7 +1,5 @@
-const Client = require("../Client")
-const Helpers = require("../helpers")
-const Errors = Helpers.errors
-const Classes = Helpers.classes
+const SendMessageError = require("../errors/SendMessageError")
+const Message = require("./Message")
 
 class Channel {
   constructor(name, options) {
@@ -28,7 +26,7 @@ class Channel {
   send(content) {
     return new Promise(async (resolve, reject) => {
       const options = {
-        hostname: this.ip.startsWith("https") ? this.ip.slice(8) : this.ip.slice(7),
+        hostname: this.client.ip.startsWith("https") ? this.client.ip.slice(8) : this.client.ip.slice(7),
         path: `/channels/${this.name}`,
         method: "POST",
         headers: {
@@ -39,7 +37,7 @@ class Channel {
       }
       try {
         let data = await this.client.makeRequest(options, {
-          userID: this.client.user.id,
+          id: this.client.user.id,
           uid: this.client.user.uid,
           username: this.client.user.username,
           tag: this.client.user.tag,
@@ -47,9 +45,9 @@ class Channel {
           sessionID: this.client.user.sessionID
         })
         let message = data.message
-        return resolve(new Classes.Message(message.msg, { client: this.client, id: message.id, author: this.client.members.get(this.client.user.id) }))
+        return resolve(new Message(message.msg, { client: this.client, id: message.id, author: this.client.members.get(this.client.user.id) }))
       } catch (e) {
-        return reject(new Errors.SendMessageError(e.message, e.type, e.status))
+        return reject(new SendMessageError(e.message, e.type, e.code))
       }
     })
   }
