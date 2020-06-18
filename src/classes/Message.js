@@ -3,7 +3,7 @@ class Message {
     this.content = content
     this.author = options.author
     this.id = options.id
-    this.server = options.server
+    this.server = options.server || false
     this.client = options.client
   }
 
