@@ -1,9 +1,6 @@
 const SendMessageError = require("../errors/SendMessageError")
 const Message = require("./Message")
-
-/**
- * @typedef {import('../Client').Client} Client
- */
+const Client = require("../Client")
 
 /**
  * Represents a member.
@@ -12,7 +9,7 @@ class Member {
   /**
    * Creates a new member.
    * @param {string} uid - The UID of the member.
-   * @param {string} id - The ID of the member.
+   * @param {number} id - The ID of the member.
    * @param {string} username - The username of the member.
    * @param {string} tag - The tag of the member.
    * @param {boolean} bot - Whether the member is a bot or not.
@@ -21,74 +18,52 @@ class Member {
    * @param {Client} options.client - The client connected to the channel.
    */
   constructor(uid, id, username, tag, bot, admin, options) {
+
+    /**
+     * The UID of the member.
+     * @type {string}
+     */
     this.uid = uid
+
+    /**
+     * The ID of the member.
+     * @type {number|string}
+     */
     this.id = id
+
+    /**
+     * The username of the member.
+     * @type {string}
+     */
     this.username = username
+
+    /**
+     * The tag of the member.
+     * @type {string}
+     */
     this.tag = tag
+
+    /**
+     * Whether the member is a bot or not.
+     * @type {boolean}
+     */
     this.bot = bot
+
+    /**
+     * Whether the member is an admin or not.
+     * @type {boolean}
+     */
     this.admin = admin
+
     this.client = options.client
-  }
-
-  get uid() {
-    return this.userUID
-  }
-
-  get id() {
-    return this.userID
-  }
-
-  get username() {
-    return this.userUsername
-  }
-
-  get tag() {
-    return this.userTag
-  }
-
-  get bot() {
-    return this.userBot
-  }
-
-  get admin() {
-    return this.userAdmin
-  }
-
-  get client() {
-    return this.userClient
-  }
-
-  set uid(uid) {
-    this.userUID = uid
-  }
-
-  set id(id) {
-    this.userID = id
-  }
-
-  set username(username) {
-    this.userUsername = username
-  }
-
-  set tag(tag) {
-    this.userTag = tag
-  }
-
-  set bot(bool) {
-    this.userBot = bool
-  }
-
-  set admin(bool) {
-    this.userAdmin = bool
-  }
-
-  set client(client) {
-    this.userClient = client
   }
 
   /**
    * Sends a message to this member.
    * @param {string} content - The message to send
+   * @returns {Promise<Message>} - The Message that was sent.
+   * @example
+   * let message = client.members.get(1234567890).send("Hi")
    */
   send(content) {
     return new Promise(async (resolve, reject) => {
@@ -112,7 +87,7 @@ class Member {
           sessionID: this.client.user.sessionID
         })
         let message = data.message
-        return resolve(new Message(message.msg, { client: this.client, id: message.id, author: this.client.members.get(this.client.user.id) }))
+        return resolve(new Message(message.msg, { client: this.client, id: message.id, author: this.client.members.get(this.client.user.id), channel: this.client.channels.get(data.channel) }))
       } catch (e) {
         return reject(new SendMessageError(e.message, e.type, e.code))
       }

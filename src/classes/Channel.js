@@ -1,9 +1,6 @@
 const SendMessageError = require("../errors/SendMessageError")
 const Message = require("./Message")
-
-/**
- * @typedef {import('../Client').Client} Client
- */
+const Client = require("../Client")
 
 /**
  * Represents a channel in a server.
@@ -16,42 +13,21 @@ class Channel {
    * @param {Client} options.client - The client connected to the channel.
    */
   constructor(name, options) {
+    /**
+     * The name of the channel
+     * @type {string}
+     */
     this.name = name
+
     this.client = options.client
   }
 
   /**
-   * @returns {string} - The name of the channel
-   */
-  get name() {
-    return this.channelName
-  }
-
-  /**
-   * @returns {Client} The client connected to the channel.
-   */
-  get client() {
-    return this.channelClient
-  }
-
-  /**
-   * Sets the channel's name (Using this will cause sending to break).
-   */
-  set name(name) {
-    this.channelName = name
-  }
-
-  /**
-   * Sets the client.
-   * @param {Client} client - The client connected to the channel.
-   */
-  set client(client) {
-    this.channelClient = client
-  }
-
-  /**
    * Sends a message to a channel.
-   * @param {string} content - The message to send
+   * @param {string} content - The message to send.
+   * @returns {Promise<Message>} - The Message that was sent.
+   * @example
+   * let message = await client.channels.get("General").send("Hi")
    */
   send(content) {
     return new Promise(async (resolve, reject) => {
@@ -75,7 +51,7 @@ class Channel {
           sessionID: this.client.user.sessionID
         })
         let message = data.message
-        return resolve(new Message(message.msg, { client: this.client, id: message.id, author: this.client.members.get(this.client.user.id) }))
+        return resolve(new Message(message.msg, { client: this.client, id: message.id, author: this.client.members.get(this.client.user.id), channel: this.client.channels.get(data.channel) }))
       } catch (e) {
         return reject(new SendMessageError(e.message, e.type, e.code))
       }

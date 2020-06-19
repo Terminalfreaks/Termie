@@ -9,6 +9,7 @@ module.exports = {
   classes: {
     Member: require("./classes/Member"),
     Message: require("./classes/Message"),
-    Channel: require("./classes/Channel")
+    Channel: require("./classes/Channel"),
+    ExtendedMap: require("./classes/ExtendedMap")
   }
 }
