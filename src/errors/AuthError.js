@@ -1,3 +1,6 @@
+/**
+ * Thrown when the client fails to authenticate.
+ */
 class AuthError extends Error {  
   /**
    * Makes a new error.

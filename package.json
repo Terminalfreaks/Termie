@@ -4,7 +4,8 @@
   "description": "First and official TermTalk bot library, made by its devs.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "doc": "jsdoc -r src/ -c .jsdoc.json"
   },
   "repository": {
     "type": "git",

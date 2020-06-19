@@ -3,8 +3,8 @@ const qs = require("querystring")
 const io = require("socket.io-client")
 const EventEmitter = require("events")
 const Helpers = require("./helpers")
-const Errors = Helpers.errors
-const Classes = Helpers.classes
+const { AuthError, ConnectError, GetChannelsError, GetMembersError } = Helpers.errors
+const { Message, Channel, Member, ExtendedMap } = Helpers.classes
 
 /**
  * Login options.
@@ -50,21 +50,18 @@ class Client extends EventEmitter {
     http = this.secure ? require("https") : require("http")
 
     /**
-     * @type {Map<String, Classes.Channel>}
+     * The channels the bot can see.
+     * @type {ExtendedMap<String, Channel>}
      */
-    this.channelList = new Map()
+    this.channels = new ExtendedMap()
 
     /**
-     * @type {Map<String, Classes.Member>}
+     * The members the bot can see.
+     * @type {ExtendedMap<number, Member>}
      */
-    this.memberList = new Map()
+    this.members = new ExtendedMap()
   }
 
-  /**
-   * Makes a request.
-   * @param {RequestOptions} opts - The options to use for the request.
-   * @param {Object} [postData] - The post or query data, if any.
-   */
   makeRequest(opts, postData) {
     return new Promise((resolve, reject) => {
       if (!opts) return reject("No options provided.")
@@ -95,41 +92,9 @@ class Client extends EventEmitter {
   }
 
   /**
-   * Gets the channels.
-   * @returns {Map<String, Classes.Channel>}
-   */
-  get channels() {
-    return this.channelList
-  }
-
-  /**
-   * Sets the channel map.
-   * @param {Map<String, Classes.Channel>} list - The new map
-   */
-  set channels(list) {
-    this.channelList = list
-  }
-
-  /**
-   * Gets the members.
-   * @returns {Map<String, Classes.Member>}
-   */
-  get members() {
-    return this.memberList
-  }
-
-  /**
-   * Sets the members map.
-   * @param {Map<String, Classes.Member>} list - The new map
-   */
-  set members(list) {
-    this.memberList = list
-  }
-
-  /**
    * Requests an updated channel list from the server, then sets it automatically.
-   * @returns {Map<String, Classes.Channel>}
-   * @throws {Errors.GetChannelsError}
+   * @returns {Promise<ExtendedMap<String, Channel>>}
+   * @throws {GetChannelsError}
    */
   async requestChannels() {
     const options = {
@@ -144,13 +109,13 @@ class Client extends EventEmitter {
     }
     try {
       let data = await this.makeRequest(options)
-      this.channels = new Map()
+      this.channels = new ExtendedMap()
       for (let channel of data.channels) {
-        this.channels.set(channel, new Classes.Channel(channel, { client: this }))
+        this.channels.set(channel, new Channel(channel, { client: this }))
       }
       return this.channels
     } catch (e) {
-      throw new Errors.GetChannelsError(e.message, e.type, e.code)
+      throw new GetChannelsError(e.message, e.type, e.code)
     }
   }
 
@@ -158,8 +123,8 @@ class Client extends EventEmitter {
    * Requests an updated member list from the server, then sets it if told to.
    * @param {?string} [channel] - The channel to get the members for, if not provided it fetches all.
    * @param {boolean} [setList] - Whether to set the fetched list as the new member list. (Not recommended if channel is not null)
-   * @returns {Map<String, Classes.Channel>}
-   * @throws {Errors.GetChannelsError}
+   * @returns {Promise<ExtendedMap<String, Channel>>}
+   * @throws {GetChannelsError}
    */
   async requestMembers(channel, setList) {
     const options = {
@@ -175,30 +140,23 @@ class Client extends EventEmitter {
     try {
       let data = await this.makeRequest(options)
       if (setList) {
-        this.members = new Map()
+        this.members = new ExtendedMap()
         for (let member of data.members) {
-          this.members.set(member.id, new Classes.Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
+          this.members.set(member.id, new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
         }
         return this.members
       } else {
-        let members = new Map()
+        let members = new ExtendedMap()
         for (let member of data.members) {
-          members.set(member.id, new Classes.Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
+          members.set(member.id, new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
         }
         return members
       }
     } catch (e) {
-      throw new Errors.GetMembersError(e.message, e.type, e.code)
+      throw new GetMembersError(e.message, e.type, e.code)
     }
   }
 
-  /**
-   * Attempts to connect to the server.
-   * @param {string} ip - The ip to connect to.
-   * @param {string|number} port - The port of the server to connect to. 
-   * @param {LoginOptions} options - The options to use
-   * @returns {Promise<Socket|Errors.ConnectError>}
-   */
   _connect(ip, port, options) {
     if (!options) options = {}
     return new Promise((resolve, reject) => {
@@ -212,14 +170,14 @@ class Client extends EventEmitter {
         if (attempt == reconnectionAttempts) {
           socket.close(true)
           socket.removeAllListeners()
-          reject(new Errors.ConnectError(`Unable to establish connect to the server (${ip}:${port}) after ${reconnectionAttempts} attempts`, "noConnection"))
+          reject(new ConnectError(`Unable to establish connect to the server (${ip}:${port}) after ${reconnectionAttempts} attempts`, "noConnection"))
         }
       })
 
       socket.on('connect', () => {
         socket.on("methodResult", (d) => {
           if (!d.success) {
-            reject(new Errors.ConnectError(d.message, d.type))
+            reject(new ConnectError(d.message, d.type))
           } else {
             return resolve(socket)
           }
@@ -228,16 +186,13 @@ class Client extends EventEmitter {
     })
   }
 
-  /**
-   * Sets up the socket's listeners.
-   */
   setupListeners() {
     this.socket.on("memberConnect", member => {
       member = member.member
       let found = this.members.get(member.id)
       let mem = !found ? null : found
       if (!found) {
-        mem = new Classes.Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this })
+        mem = new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this })
         this.members.set(mem.id, mem)
       }
       this.emit("memberConnect", mem)
@@ -246,16 +201,17 @@ class Client extends EventEmitter {
     this.socket.on("memberDisconnect", member => {
       member = member.member
       let found = this.members.get(member.id)
-      let mem = found ? found : new Classes.Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this })
+      let mem = found ? found : new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this })
       if (found) {
         this.members.delete(found.id)
       }
       this.emit("memberDisconnect", mem)
     })
 
-    this.socket.on("msg", data => this.emit("message", new Classes.Message(data.msg, {
+    this.socket.on("msg", data => this.emit("message", new Message(data.msg, {
       id: data.id,
       author: data.server ? "Server" : this.members.get(data.userID),
+      channel: this.channels.get(data.channel),
       server: data.server || false,
       client: this
     })))
@@ -266,7 +222,10 @@ class Client extends EventEmitter {
    * @param {LoginOptions} options - The login options. 
    * @emits Client#ready
    * @emits Client#error
-   * @throws {Errors.AuthError}
+   * @returns {Promise}
+   * @throws {AuthError}
+   * @example
+   * client.login({reconnectionAttempts:10})
    */
   login(options) {
     return new Promise(async (resolve, reject) => {
@@ -280,7 +239,7 @@ class Client extends EventEmitter {
         if (!data.success) {
           this.socket.removeAllListeners()
           this.socket.close(true)
-          reject(new Errors.AuthError(data.message, data.type))
+          reject(new AuthError(data.message, data.type))
         } else {
           this.socket.removeAllListeners()
           this.user = data.bot
@@ -314,11 +273,22 @@ class Client extends EventEmitter {
    * @param {string} username - The username of the bot.
    * @param {string} tag - The tag of the bot.
    * @param {BotCreationOptions} options - The additional options
+   * @returns {Promise<Object>} - The object containing the token
+   * @example
+   * Client.createBot("BottyBot", "BottyBotsUsername", "0001", {hostname:"localhost",secure:false,port:"3000",ownerUid:"BestOwner",ownerPassword:"verySecurePassword"})
+   * .then(d => {
+   *   console.log(d.token)
+   * }).catch(e => {
+   *   console.log(e)
+   * })
+   * 
+   * 
    */
   static createBot(uid, username, tag, options) {
     return new Promise((resolve, reject) => {
       let http = options.secure ? require("https") : require("http")
       if (!uid || !username || !tag) return reject("Not all bot create options were supplied.")
+      if(!options) return reject("No options provided.")
       if (!options.hostname || !options.port) return reject("Provide proper options.")
       if (!options.ownerUid || !options.ownerPassword) return reject("Please provide owner information.")
       let opts = {
@@ -330,7 +300,6 @@ class Client extends EventEmitter {
           "Content-Type": "application/json",
         }
       }
-      if (!opts) return reject("No options provided.")
       let postData = JSON.stringify({
         ownerUid: options.ownerUid,
         ownerPassword: options.ownerPassword,
