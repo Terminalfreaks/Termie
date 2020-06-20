@@ -168,7 +168,7 @@ class ExtendedMap extends Map {
   }
 
   /**
-   * Returns true if at least value in the ExtendedMap passes the function.
+   * Returns true if at least one value in the ExtendedMap passes the function.
    * @param {Function} fn - The compare function should return a boolean. Passes value and the ExtendedMap the function is being executed on as parameters.
    * @returns {!boolean} - Whether the function returned true at least once.
    * @example
