@@ -20,6 +20,17 @@ class Member {
   constructor(uid, id, username, tag, bot, admin, options) {
 
     /**
+     * Whether this member represents all lurkers. If true, username will be the lurkers message
+     * @type {boolean}
+     */
+    this.lurkers = false
+
+    if(!id){
+      this.lurkers = true
+      this.username = uid
+    }
+
+    /**
      * The UID of the member.
      * @type {string}
      */

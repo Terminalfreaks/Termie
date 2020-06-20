@@ -122,9 +122,9 @@ class Client extends EventEmitter {
   /**
    * Requests an updated member list from the server, then sets it if told to.
    * @param {?string} [channel] - The channel to get the members for, if not provided it fetches all.
-   * @param {boolean} [setList] - Whether to set the fetched list as the new member list. (Not recommended if channel is not null)
-   * @returns {Promise<ExtendedMap<String, Channel>>}
-   * @throws {GetChannelsError}
+   * @param {boolean} [setList] - Whether to set the fetched list as the new member list (Not recommended if channel is not null).
+   * @returns {Promise<ExtendedMap<number|string, Member>>}
+   * @throws {GetMembersError}
    */
   async requestMembers(channel, setList) {
     const options = {
@@ -142,13 +142,15 @@ class Client extends EventEmitter {
       if (setList) {
         this.members = new ExtendedMap()
         for (let member of data.members) {
-          this.members.set(member.id, new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
+          if(member.lurkers) this.members.set("Lurkers", new Member(member.lurkers, null, null, null, null, null, { client: this }))
+          else this.members.set(member.id, new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
         }
         return this.members
       } else {
         let members = new ExtendedMap()
         for (let member of data.members) {
-          members.set(member.id, new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
+          if(member.lurkers) this.members.set("Lurkers", new Member(member.lurkers, null, null, null, null, null, { client: this }))
+          else this.members.set(member.id, new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
         }
         return members
       }
