@@ -1,6 +1,5 @@
 const SendMessageError = require("../errors/SendMessageError")
 const Message = require("./Message")
-const Client = require("../Client")
 
 /**
  * Represents a member.
@@ -98,7 +97,7 @@ class Member {
           sessionID: this.client.user.sessionID
         })
         let message = data.message
-        return resolve(new Message(message.msg, { client: this.client, id: message.id, author: this.client.members.get(this.client.user.id), channel: this.client.channels.get(data.channel) }))
+        return resolve(new Message(message.msg, { client: this.client, id: message.id, author: this.client.members.get(this.client.user.id), channel: this.client.channels.get(message.channel) }))
       } catch (e) {
         return reject(new SendMessageError(e.message, e.type, e.code))
       }

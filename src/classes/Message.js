@@ -1,7 +1,3 @@
-const Client = require("../Client")
-const Member = require("./Member")
-const Channel = require("./Channel")
-
 /**
 * Represents a message.
 */
