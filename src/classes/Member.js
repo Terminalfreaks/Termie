@@ -73,7 +73,7 @@ class Member {
    * @param {string} content - The message to send
    * @returns {Promise<Message>} - The Message that was sent.
    * @example
-   * let message = client.members.get(1234567890).send("Hi")
+   * let message = await client.members.get(1234567890).send("Hi")
    */
   send(content) {
     return new Promise(async (resolve, reject) => {
