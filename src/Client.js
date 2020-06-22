@@ -1,16 +1,17 @@
-let http = null
+const http = require("http")
+const https = require("https")
 const qs = require("querystring")
 const io = require("socket.io-client")
 const EventEmitter = require("events")
-const Helpers = require("./helpers")
-const { AuthError, ConnectError, GetChannelsError, GetMembersError } = Helpers.errors
-const { Message, Channel, Member, ExtendedMap } = Helpers.classes
+const ExtendedMap = require("./helpers").classes.ExtendedMap
+const ExtendedMap = require("./helpers").classes.Server
 
 /**
  * Login options.
  * @typedef {Object} LoginOptions
  * @property {number} [reconnectionAttempts=5] - The number of time to attempt to reconnect.
  * @property {number} [timeout=5000] - The time, in ms, to wait for a connection while connecting.
+ * @property {boolean} [secure=false] - Whether to use SSL or not.
  */
 
 
@@ -21,6 +22,14 @@ const { Message, Channel, Member, ExtendedMap } = Helpers.classes
  * @property {string} path - The path to request to.
  * @property {RequestHeaders} headers - Request headers.
  * @property {string|number} port - The port to send the request to.
+ */
+
+/**
+ * Client options.
+ * @typedef {Object} clientOptions
+ * @param {string} token - The bot's token.
+ * @param {string} ip - The IP to connect to, including the http protocol to use. 
+ * @param {string|number} port - The port of the server.
  */
 
 /**
@@ -35,19 +44,22 @@ const { Message, Channel, Member, ExtendedMap } = Helpers.classes
 class Client extends EventEmitter {
   /**
    * Create a new client.
-   * @param {string} token - The bot's token.
-   * @param {string} ip - The IP to connect to, including the http protocol to use. 
-   * @param {string|number} port - The port of the server.
+   * @param {clientOptions|clientOptions[]} - The client options, or an array of them if connecting to multiple servers.
    */
   constructor(token, ip, port) {
     super()
-    if (!token || !ip || !port) throw new Error("Missing one of the required parameters.")
-    if (!ip.startsWith("http")) throw new Error("IP must start with the http prefix (http:// or https://)")
-    this.token = token
-    this.ip = ip
-    this.port = port
-    this.secure = ip.startsWith("https")
-    http = this.secure ? require("https") : require("http")
+    this.servers = new ExtendedMap()
+    if(typeof token !== "string" && token.length >= 1){
+      
+    }else{
+      if (!token || !ip || !port) throw new Error("Missing one of the required parameters.")
+      if (!ip.startsWith("http")) throw new Error("IP must start with the http prefix (http:// or https://)")
+      this.servers.set(`${ip}:${port}`, new Server(ip, port, token))
+      this.token = token
+      this.ip = ip
+      this.port = port
+      this.secure = ip.startsWith("https")
+    }
 
     /**
      * The channels the bot can see.
@@ -142,14 +154,14 @@ class Client extends EventEmitter {
       if (setList) {
         this.members = new ExtendedMap()
         for (let member of data.members) {
-          if(member.lurkers) this.members.set("Lurkers", new Member(member.lurkers, null, null, null, null, null, { client: this }))
+          if (member.lurkers) this.members.set("Lurkers", new Member(member.lurkers, null, null, null, null, null, { client: this }))
           else this.members.set(member.id, new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
         }
         return this.members
       } else {
         let members = new ExtendedMap()
         for (let member of data.members) {
-          if(member.lurkers) this.members.set("Lurkers", new Member(member.lurkers, null, null, null, null, null, { client: this }))
+          if (member.lurkers) this.members.set("Lurkers", new Member(member.lurkers, null, null, null, null, null, { client: this }))
           else this.members.set(member.id, new Member(member.uid, member.id, member.username, member.tag, !!member.bot, member.admin, { client: this }))
         }
         return members
@@ -163,7 +175,7 @@ class Client extends EventEmitter {
     if (!options) options = {}
     return new Promise((resolve, reject) => {
       const reconnectionAttempts = options.reconnectionAttempts || 5
-      let socket = io(`${ip}:${port}`, { secure: this.secure, timeout: options.timeout || 5000 })
+      let socket = io(`${ip}:${port}`, { secure: options.secure, timeout: options.timeout || 5000 })
 
       let attempt = 0
 
@@ -290,7 +302,7 @@ class Client extends EventEmitter {
     return new Promise((resolve, reject) => {
       let http = options.secure ? require("https") : require("http")
       if (!uid || !username || !tag) return reject("Not all bot create options were supplied.")
-      if(!options) return reject("No options provided.")
+      if (!options) return reject("No options provided.")
       if (!options.hostname || !options.port) return reject("Provide proper options.")
       if (!options.ownerUid || !options.ownerPassword) return reject("Please provide owner information.")
       let opts = {
@@ -335,3 +347,32 @@ class Client extends EventEmitter {
 }
 
 module.exports = Client
+
+/**
+ * Emitted when the client enters a ready state.
+ * @event Client#ready
+ */
+
+/**
+ * Emitted when an error happens that doesn't crash the client.
+ * @event Client#error
+ * @param {Error} - The error.
+ */
+
+/**
+ * Emitted when the client receives a message.
+ * @event Client#message
+ * @param {Message} - The message.
+ */
+
+/**
+ * Emitted when a member connects.
+ * @event Client#memberConnect
+ * @param {Member} - The member.
+ */
+
+/**
+ * Emitted when a member disconnects.
+ * @event Client#memberDisconnect
+ * @param {Member} - The member.
+ */
