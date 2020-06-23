@@ -5,6 +5,9 @@ const Helpers = require("../helpers")
 const { AuthError, ConnectError, GetChannelsError, GetMembersError } = Helpers.errors
 const { Message, Channel, Member, ExtendedMap } = Helpers.classes
 
+/**
+ * Represents a Server.
+ */
 class Server extends EventEmitter {
   constructor(ip, port, token, client) {
     super()
